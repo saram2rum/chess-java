@@ -34,5 +34,24 @@ public class Position {
         return Objects.hash(x, y);
     }
 
+    // Position.java
+
+    // ... 기존 코드 아래에 추가 ...
+
+    // x좌표(가로) 차이 계산
+    public int xDiff(Position other) {
+        return other.x - this.x;
+    }
+
+    // y좌표(세로) 차이 계산
+    public int yDiff(Position other) {
+        return other.y - this.y;
+    }
+
+    // (선택) 절대값으로 거리 구하기 (나중에 룩, 비숍 때 유용함)
+    public boolean isVertical(Position other) {
+        return this.x == other.x && this.y != other.y;
+    }
+
 }
 

@@ -64,6 +64,11 @@ public class Board {
             throw new IllegalArgumentException("출발지에 기물이 없습니다! 귀신을 옮길 순 없어요 👻");
         }
 
+        // --- [NEW] 전략 패턴 적용: 기물별 이동 규칙 검사 ---
+        if (!piece.isMovable(source, target)) {
+            throw new IllegalArgumentException("그 기물은 거기로 갈 수 없습니다! 규칙 위반 삐-! 🚨");
+        }
+
         // 2. 내 기물인지 확인 (상대방 말을 움직이면 안 되니까)
         // (이 부분은 나중에 '현재 누구 턴인지' 관리할 때 추가합시다. 일단 패스!)
 

@@ -1,5 +1,7 @@
 package chess.domain.piece;
 
+import chess.domain.board.Position;
+
 import java.util.Objects;
 
 public abstract class Piece {
@@ -29,6 +31,10 @@ public abstract class Piece {
         return color;
     }
 
-    // 나중에 구현할 움직임 로직 (추상 메서드)
-    // public abstract boolean canMove(Position source, Position target);
+    // Piece.java
+
+    // ... 기존 코드 아래에 추가 ...
+
+    // "source에서 target으로 움직이는 게 너의 규칙(전략)에 맞니?" 라고 묻는 메서드
+    public abstract boolean isMovable(Position source, Position target);
 }
