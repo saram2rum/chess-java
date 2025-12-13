@@ -12,9 +12,9 @@ public class Rook extends Piece {
     }
 
     @Override
-    public boolean isMovable(Position source, Position target) {
+    public boolean isMovable(Position source, Position target, Piece targetPiece) {
 
-        // 같은 자리로 이동하며 안 됨
+        // 같은 자리로 이동하면 안 됨
         if (source.equals(target)) {
             return false;
         }

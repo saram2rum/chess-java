@@ -14,7 +14,7 @@ public class Queen extends Piece {
     }
 
     @Override
-    public boolean isMovable(Position source, Position target) {
+    public boolean isMovable(Position source, Position target, Piece targetPiece) {
         return true; // 일단 임시로 허용!
     }
 

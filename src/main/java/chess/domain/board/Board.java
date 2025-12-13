@@ -97,7 +97,7 @@ public class Board {
             throw new IllegalArgumentException("상대방의 기물은 건드릴 수 없습니다!");
         }
 
-        if (!sourcePiece.isMovable(source, target)) {
+        if (!sourcePiece.isMovable(source, target, targetPiece)) {
             throw new IllegalArgumentException("그 기물은 거기로 갈 수 없습니다! 규칙 위반 삐-! 🚨");
         }
 
