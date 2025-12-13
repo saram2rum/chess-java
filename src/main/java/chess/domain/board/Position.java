@@ -7,9 +7,19 @@ public class Position {
     private final int x;
     private final int y;
 
+    public int getX() {
+        return x;
+    }
+
+    public int getY() {
+        return y;
+    }
+
     public Position(final String uiPosition) {
-        this.x = uiPosition.charAt(0) - 'a';
-        this.y = uiPosition.charAt(1) - '1';
+
+        String lowerPosition = uiPosition.toLowerCase();
+        this.x = lowerPosition.charAt(0) - 'a';
+        this.y = lowerPosition.charAt(1) - '1';
     }
 
     public Position(int x, int y) {

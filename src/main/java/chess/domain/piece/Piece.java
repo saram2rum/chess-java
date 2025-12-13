@@ -23,6 +23,10 @@ public abstract class Piece {
         return color.isBlack();
     }
 
+    public boolean isSliding() {
+        return false;
+    }
+
     public Type getType() {
         return type;
     }

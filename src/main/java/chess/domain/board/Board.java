@@ -47,39 +47,69 @@ public class Board {
         pieces.put(new Position(7, 0), new Rook(Color.WHITE));
     }
 
-    // 테스트용: 기물이 제대로 들어갔는지 확인하는 메서드
-    public Piece findPiece(String position) {
-        return pieces.get(new Position(position));
+    // 안전한 findPiece 메서드
+    private Piece findPiece(Position position) {
+        Piece piece = pieces.get(position);
+
+        // 검문: "야, 여기 아무것도 없는데?"
+        if (piece == null) {
+            throw new IllegalArgumentException("해당 위치에는 기물이 없습니다.");
+        }
+
+        // 여기까지 왔다면, 무조건 '살아있는 기물'임이 보장됨
+        return piece;
+    }
+
+    private void validatePathIsEmpty(Position source, Position target) {
+        // 1. 방향 구하기 (a1 -> a5면 NORTH)
+        Direction direction = Direction.of(source, target);
+
+        int currentX = source.getX();
+        int currentY = source.getY();
+
+        // 2. 목적지에 닿을 때까지 반복 (출발지 바로 다음 칸부터 검사)
+        while (true) {
+            currentX += direction.getXDegree();
+            currentY += direction.getYDegree();
+
+            Position current = new Position(currentX, currentY);
+
+            // 도착지에 왔으면 멈춤 (도착지에 적이 있는 건 잡으면 되니까 OK)
+            if (current.equals(target)) {
+                break;
+            }
+
+            // 3. 가는 길목에 누가 있다? -> 에러!! 쾅!!
+            if (pieces.containsKey(current)) {
+                throw new IllegalArgumentException("이동 경로가 막혀있습니다! 🚧");
+            }
+        }
     }
 
     // ... 기존 코드 아래에 추가 ...
 
-    public void move(String sourceValue, String targetValue) {
-        Position source = new Position(sourceValue);
-        Position target = new Position(targetValue);
+    public void move(Position source, Position target, Color currentTurn) {
 
-        // 1. 출발지에 기물이 있는지 확인 (없으면 에러!)
-        Piece piece = pieces.get(source);
-        if (piece == null) {
-            throw new IllegalArgumentException("출발지에 기물이 없습니다! 귀신을 옮길 순 없어요 👻");
+        Piece sourcePiece = findPiece(source);
+        Piece targetPiece = pieces.get(target);
+
+        if (sourcePiece.getColor() != currentTurn) {
+            throw new IllegalArgumentException("상대방의 기물은 건드릴 수 없습니다!");
         }
 
-        // --- [NEW] 전략 패턴 적용: 기물별 이동 규칙 검사 ---
-        if (!piece.isMovable(source, target)) {
+        if (!sourcePiece.isMovable(source, target)) {
             throw new IllegalArgumentException("그 기물은 거기로 갈 수 없습니다! 규칙 위반 삐-! 🚨");
         }
 
-        // 2. 내 기물인지 확인 (상대방 말을 움직이면 안 되니까)
-        // (이 부분은 나중에 '현재 누구 턴인지' 관리할 때 추가합시다. 일단 패스!)
-
-        // 3. 같은 팀이 있는 자리로 이동 불가 (팀킬 방지)
-        Piece targetPiece = pieces.get(target);
-        if (targetPiece != null && targetPiece.getColor() == piece.getColor()) {
+        if (targetPiece != null && targetPiece.getColor() == currentTurn) {
             throw new IllegalArgumentException("같은 팀 기물이 있는 곳으로는 이동할 수 없습니다! 🚫");
         }
 
-        // 4. 실제 이동 (Map 갱신)
-        pieces.put(target, piece); // 도착지에 기물 놓기 (만약 적이 있으면 덮어씌워짐 -> 잡은 것!)
-        pieces.remove(source);     // 출발지 비우기
+        if (sourcePiece.isSliding()) {
+            validatePathIsEmpty(source, target);
+        }
+
+        pieces.put(target, sourcePiece);
+        pieces.remove(source);
     }
 }
