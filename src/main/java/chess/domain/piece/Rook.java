@@ -1,26 +1,25 @@
 package chess.domain.piece;
 
+import chess.domain.board.Direction;
 import chess.domain.board.Position;
 
 public class Rook extends Piece {
 
-    public Rook(final Color color) { super(color, Type.ROOK); }
+    public Rook(final Color color) {
+        super(color, Type.ROOK);
+    }
 
     @Override
     public boolean isSliding() {
-        return true;
+        return true; // 경로 장애물 검사 필요
     }
 
     @Override
     public boolean isMovable(Position source, Position target, Piece targetPiece) {
+        // 1. 방향 계산 (직선/대각선이 아니거나 제자리니면 여기서 에러가 나서 걸러짐)
+        Direction direction = Direction.of(source, target);
 
-        // 같은 자리로 이동하면 안 됨
-        if (source.equals(target)) {
-            return false;
-        }
-        // 직진이어야함
-        return source.getX() == target.getX() || source.getY() == target.getY();
-
+        // 2. "직선이니?" 라고 물어보면 끝!
+        return direction.isLinear();
     }
-
 }

@@ -1,5 +1,6 @@
 package chess.domain.piece;
 
+import chess.domain.board.Direction;
 import chess.domain.board.Position;
 
 public class Bishop extends Piece {
@@ -15,6 +16,9 @@ public class Bishop extends Piece {
 
     @Override
     public boolean isMovable(Position source, Position target, Piece targetPiece) {
-        return true; // 일단 임시로 허용!
+        Direction direction = Direction.of(source, target);
+
+        // 대각선 방향(북동, 북서, 남동, 남서) 중 하나인지 확인
+        return direction.isDiagonal();
     }
 }

@@ -12,6 +12,9 @@ public enum Direction {
     WEST(-1, 0),
     NORTHWEST(-1, 1);
 
+    private int xDegree;
+    private int yDegree;
+
     public int getXDegree() {
         return xDegree;
     }
@@ -20,8 +23,13 @@ public enum Direction {
         return yDegree;
     }
 
-    private int xDegree;
-    private int yDegree;
+    public boolean isDiagonal() {
+        return xDegree != 0 && yDegree != 0;
+    }
+
+    public boolean isLinear() {
+        return xDegree == 0 || yDegree == 0;
+    }
 
     Direction(int xDegree, int yDegree) {
         this.xDegree = xDegree;

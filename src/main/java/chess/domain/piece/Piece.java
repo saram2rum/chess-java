@@ -12,6 +12,17 @@ public abstract class Piece {
         this.type = type;
     }
 
+    private boolean hasMoved = false;
+
+    // 기물이 이동할 때마다 호출해 줄 메서드
+    public void updateHasMoved() {
+        this.hasMoved = true;
+    }
+
+    public boolean isFirstMove() {
+        return !hasMoved;
+    }
+
     // ✅ 여기에 추가! (팀킬 방지용)
     public boolean isSameColor(Piece other) {
         if (other == null) {
@@ -29,6 +40,10 @@ public abstract class Piece {
     }
 
     public boolean isSliding() {
+        return false;
+    }
+
+    public boolean isKing() {
         return false;
     }
 
