@@ -18,6 +18,8 @@ public enum Type {
         this.score = score;
     }
 
+    public boolean isKing() { return this == KING; }
+
     public double getScore() {
         return score;
     }

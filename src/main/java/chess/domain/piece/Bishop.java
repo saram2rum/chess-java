@@ -16,9 +16,11 @@ public class Bishop extends Piece {
 
     @Override
     public boolean isMovable(Position source, Position target, Piece targetPiece) {
-        Direction direction = Direction.of(source, target);
-
-        // 대각선 방향(북동, 북서, 남동, 남서) 중 하나인지 확인
-        return direction.isDiagonal();
+        try {
+            Direction direction = Direction.of(source, target); // 이상한 각도면 여기서 터짐💥
+            return direction.isDiagonal();
+        } catch (IllegalArgumentException e) {
+            return false; // 방향이 없으면 이동 불가
+        }
     }
 }

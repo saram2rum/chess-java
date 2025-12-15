@@ -12,7 +12,23 @@ public class Pawn extends Piece {
 
     @Override
     public boolean isMovable(Position source, Position target, Piece targetPiece) {
-        Direction direction = Direction.of(source, target);
+        Direction direction;
+
+        try {
+            // 🚨 방향부터 구하다가 터지는 중! -> 예외 처리로 감싸기
+            direction = Direction.of(source, target);
+        } catch (IllegalArgumentException e) {
+            return false; // 방향이 이상하면 폰은 절대 못 감
+        }
+
+        // 🚨 [추가] 거리 계산: 폰은 무조건 1칸(대각선 포함)만 움직일 수 있음!
+        // (처음 2칸 움직이는 룰은 나중에 추가하더라도 일단 기본은 1칸)
+        int xDiff = Math.abs(source.getX() - target.getX());
+        int yDiff = Math.abs(source.getY() - target.getY());
+
+        if (xDiff > 1 || yDiff > 1) {
+            return false; // 1칸 넘게 차이나면 폰은 절대 못 감 (레이저 발사 금지 🙅‍♂️)
+        }
 
         // 2. 방향 결정 (부모의 isWhite() 재사용)
         Direction forward = isWhite() ? Direction.NORTH : Direction.SOUTH;

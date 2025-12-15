@@ -16,9 +16,12 @@ public class Queen extends Piece {
 
     @Override
     public boolean isMovable(Position source, Position target, Piece targetPiece) {
-        Direction direction = Direction.of(source, target);
-
-        // 직선이거나 대각선이면 OK
-        return direction.isLinear() || direction.isDiagonal();
+        try {
+            Direction direction = Direction.of(source, target);
+            // 퀸은 직선이든 대각선이든 Direction이 나오기만 하면 OK
+            return direction.isLinear() || direction.isDiagonal();
+        } catch (IllegalArgumentException e) {
+            return false;
+        }
     }
 }

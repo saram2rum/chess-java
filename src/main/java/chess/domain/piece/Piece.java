@@ -31,6 +31,18 @@ public abstract class Piece {
         return this.color == other.getColor();
     }
 
+    public boolean is(Type type, Color color) {
+        return this.type == type && this.color == color;
+    }
+
+    public boolean is(Type type) {
+        return this.type == type;
+    }
+
+    public boolean isKing() {
+        return type.isKing();
+    }
+
     public boolean isWhite() {
         return color.isWhite();
     }
@@ -40,10 +52,6 @@ public abstract class Piece {
     }
 
     public boolean isSliding() {
-        return false;
-    }
-
-    public boolean isKing() {
         return false;
     }
 

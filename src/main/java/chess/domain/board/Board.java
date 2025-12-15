@@ -7,6 +7,9 @@ import java.util.Map;
 public class Board {
     private final Map<Position, Piece> pieces = new HashMap<>();
 
+    private Position whiteKingPosition;
+    private Position blackKingPosition;
+
     public void initialize() {
         pieces.clear(); // 맵을 싹 비우고 시작
         addBlackPieces();
@@ -24,7 +27,9 @@ public class Board {
         pieces.put(new Position(1, 7), new Knight(Color.BLACK));
         pieces.put(new Position(2, 7), new Bishop(Color.BLACK));
         pieces.put(new Position(3, 7), new Queen(Color.BLACK));
-        pieces.put(new Position(4, 7), new King(Color.BLACK));
+        Position pos = new Position(4, 7);
+        pieces.put(pos, new King(Color.BLACK));
+        blackKingPosition = pos;
         pieces.put(new Position(5, 7), new Bishop(Color.BLACK));
         pieces.put(new Position(6, 7), new Knight(Color.BLACK));
         pieces.put(new Position(7, 7), new Rook(Color.BLACK));
@@ -41,7 +46,9 @@ public class Board {
         pieces.put(new Position(1, 0), new Knight(Color.WHITE));
         pieces.put(new Position(2, 0), new Bishop(Color.WHITE));
         pieces.put(new Position(3, 0), new Queen(Color.WHITE));
-        pieces.put(new Position(4, 0), new King(Color.WHITE));
+        Position pos = new Position(4, 0);
+        pieces.put(pos, new King(Color.WHITE));
+        whiteKingPosition = pos;
         pieces.put(new Position(5, 0), new Bishop(Color.WHITE));
         pieces.put(new Position(6, 0), new Knight(Color.WHITE));
         pieces.put(new Position(7, 0), new Rook(Color.WHITE));
@@ -111,5 +118,70 @@ public class Board {
 
         pieces.put(target, sourcePiece);
         pieces.remove(source);
+
+        if (sourcePiece.is(Type.KING, Color.WHITE)) {
+            whiteKingPosition = target;
+        }
+
+        if (sourcePiece.is(Type.KING, Color.BLACK)) {
+            blackKingPosition = target;
+        }
     }
+
+    public boolean isChecked(Color kingColor) {
+        Position kingPosition = kingColor.isWhite() ? whiteKingPosition : blackKingPosition;
+        Piece king = pieces.get(kingPosition);
+
+        for (Position source : pieces.keySet()) {
+            Piece attacker = pieces.get(source);
+
+            // 1. 아군은 패스
+            if (attacker.isSameColor(king)) continue;
+
+            // 2. 기본 이동 규칙 검사 (방향, 거리 등)
+            if (!attacker.isMovable(source, kingPosition, king)) continue;
+
+            // 3. 🚨 [추가] 슬라이딩 기물(룩, 비숍, 퀸)은 장애물 검사 필수!
+            // 나이트는 점프하니까 검사 안 함. 폰은 바로 앞이니 검사 안 함(혹은 1칸이라 루프 안 돎).
+            if (attacker.isSliding()) {
+                if (isPathBlocked(source, kingPosition)) {
+                    continue; // 벽에 막혔으니 체크 아님 -> 다음 놈 검사
+                }
+            }
+
+            // 여기까지 통과하면 진짜 체크!
+            return true;
+        }
+        return false;
+    }
+
+    // 장애물이 있으면 true, 뻥 뚫려 있으면 false
+    private boolean isPathBlocked(Position source, Position target) {
+        Direction direction = Direction.of(source, target);
+        Position current = source;
+
+        while (true) {
+            int nextX = current.getX() + direction.getXDegree();
+            int nextY = current.getY() + direction.getYDegree();
+
+            // 🚨 [필수] 체스판 밖으로 나가면 즉시 종료! (무한 루프 방지)
+            if (nextX < 0 || nextX > 7 || nextY < 0 || nextY > 7) {
+                return false;
+            }
+
+            current = new Position(nextX, nextY);
+
+            // 1. 목적지(왕)에 도착했으면 "장애물 없음" (통과)
+            if (current.equals(target)) {
+                return false;
+            }
+
+            // 2. 가는 길에 다른 기물이 있으면 "장애물 있음" (차단)
+            if (pieces.containsKey(current)) {
+                return true;
+            }
+        }
+    }
+
+
 }

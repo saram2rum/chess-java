@@ -6,6 +6,10 @@ public enum Color {
     BLACK,
     NO_COLOR;
 
+    public Color opponent() {
+        return this.isWhite() ? BLACK : WHITE;
+    }
+
     public boolean isWhite() {
         return this == WHITE;
     }

@@ -16,10 +16,11 @@ public class Rook extends Piece {
 
     @Override
     public boolean isMovable(Position source, Position target, Piece targetPiece) {
-        // 1. 방향 계산 (직선/대각선이 아니거나 제자리니면 여기서 에러가 나서 걸러짐)
-        Direction direction = Direction.of(source, target);
-
-        // 2. "직선이니?" 라고 물어보면 끝!
-        return direction.isLinear();
+        try {
+            Direction direction = Direction.of(source, target);
+            return direction.isLinear();
+        } catch (IllegalArgumentException e) {
+            return false; // 방향 성립 안 되면 이동 불가
+        }
     }
 }
