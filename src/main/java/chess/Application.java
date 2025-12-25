@@ -6,22 +6,27 @@ import chess.domain.board.Position;
 public class Application {
 
     public static void main(String[] args) {
-        // 1. 게임 시작 (여기서 Board 생성, 기물 초기화, 턴 설정 다 됨)
+
         ChessGame game = new ChessGame();
+        System.out.println("=== ♟️ 폰 2칸 이동 규칙 테스트 (정밀) ♟️ ===");
 
-        System.out.println("=== 체크 로직 테스트 시작 ===");
+        // 1. [White] 초기 위치 2칸 전진 (성공해야 함)
+        move(game, "a2", "a4");
 
-        // 불가능한 움직임
-        move(game, "f2", "f5");
-        // 상대 기물
-        move(game, "f7", "f6");
-        // 제자리 걸음
-        move(game, "f2", "f2");
+        // 2. [Black] 흑색도 아무거나 하나 둬서 턴을 넘겨줌 (h7 -> h6)
+        // (그래야 다시 백색 차례가 옴)
+        move(game, "h7", "h6");
 
-        move(game, "f2", "f3");
-        move(game, "e7", "e6");
-        move(game, "a2", "a3");
-        move(game, "d8", "h4");
+        // 3. [White] 한 번 움직였던 폰이 또 2칸 가려고 함 (a4 -> a6) -> 여기서 실패해야 함!
+        // 기대 메시지: "그 기물은 거기로 갈 수 없습니다!"
+        move(game, "a4", "a6");
+
+        // 4. [White] (실패했으니 여전히 백 턴) 이번엔 1칸만 가봄 (a4 -> a5) -> 성공해야 함
+        move(game, "a4", "a5");
+
+        // 5. [Black] b7 -> b5 (흑 폰 2칸 테스트)
+        move(game, "b7", "b5");
+        System.out.println("--- 흑 폰 테스트 완료 ---");
 
     }
 
@@ -31,12 +36,13 @@ public class Application {
             System.out.print("이동 시도: " + source + " -> " + target + " ... ");
 
             // game.move 안에서 1.턴 검사 -> 2.기물 검사 -> 3.이동 -> 4.턴 넘기기 다 함
-            game.move(new Position(source), new Position(target));
+            game.move(source, target);
 
             System.out.println("✅ 성공!");
             // (선택) 눈으로 보고 싶다면: OutputView.printBoard(game.getBoard());
         } catch (Exception e) {
             System.out.println("❌ 실패: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 }

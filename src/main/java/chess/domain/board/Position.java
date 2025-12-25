@@ -15,16 +15,37 @@ public class Position {
         return y;
     }
 
-    public Position(final String uiPosition) {
+    // 1. 문자열 생성자 ("e2")
+    public Position(String uiPosition) {
+        if (uiPosition == null || uiPosition.length() != 2) {
+            throw new IllegalArgumentException("위치 입력은 'e2' 같은 2글자여야 합니다.");
+        }
 
         String lowerPosition = uiPosition.toLowerCase();
-        this.x = lowerPosition.charAt(0) - 'a';
-        this.y = lowerPosition.charAt(1) - '1';
+        int parsedX = lowerPosition.charAt(0) - 'a';
+        int parsedY = lowerPosition.charAt(1) - '1';
+
+        // 🛡️ 공통 검증 메서드 호출
+        validate(parsedX, parsedY);
+
+        this.x = parsedX;
+        this.y = parsedY;
     }
 
+    // 2. 숫자 생성자 (0, 1) -> 여기도 검사 필수!! 🚨
     public Position(int x, int y) {
+        // 🛡️ 공통 검증 메서드 호출
+        validate(x, y);
+
         this.x = x;
         this.y = y;
+    }
+
+    // 🔒 검증 로직을 한곳에 모음 (중복 제거)
+    private void validate(int x, int y) {
+        if (x < 0 || x > 7 || y < 0 || y > 7) {
+            throw new IllegalArgumentException("체스판 범위를 벗어났습니다. x:" + x + ", y:" + y);
+        }
     }
 
     @Override

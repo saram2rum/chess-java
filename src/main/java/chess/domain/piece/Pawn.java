@@ -13,39 +13,52 @@ public class Pawn extends Piece {
     @Override
     public boolean isMovable(Position source, Position target, Piece targetPiece) {
         Direction direction;
-
         try {
-            // 🚨 방향부터 구하다가 터지는 중! -> 예외 처리로 감싸기
             direction = Direction.of(source, target);
         } catch (IllegalArgumentException e) {
-            return false; // 방향이 이상하면 폰은 절대 못 감
+            return false;
         }
 
-        // 🚨 [추가] 거리 계산: 폰은 무조건 1칸(대각선 포함)만 움직일 수 있음!
-        // (처음 2칸 움직이는 룰은 나중에 추가하더라도 일단 기본은 1칸)
         int xDiff = Math.abs(source.getX() - target.getX());
         int yDiff = Math.abs(source.getY() - target.getY());
 
-        if (xDiff > 1 || yDiff > 1) {
-            return false; // 1칸 넘게 차이나면 폰은 절대 못 감 (레이저 발사 금지 🙅‍♂️)
+        // 거리 체크 (1칸 혹은 2칸)
+        if (yDiff > 2 || xDiff > 1) {
+            return false; // y가 2칸 넘거나, x가 1칸 넘으면 절대 불가
         }
 
-        // 2. 방향 결정 (부모의 isWhite() 재사용)
+        // (추가) 2칸 이동 시도라면? x이동은 없어야 함 (직진만 가능)
+        if (yDiff == 2 && xDiff != 0) {
+            return false;
+        }
+
         Direction forward = isWhite() ? Direction.NORTH : Direction.SOUTH;
 
-        // 공격 방향 (백: 북서/북동, 흑: 남서/남동)
-        // (Direction Enum 순서나 정의에 따라 다를 수 있으니 확인 필요)
-        // 일단 개념적으로 '공격용 대각선'인지 확인
-        boolean isAttackMove = isAttackDirection(direction);
-
-        // [상황 A] 직진 (앞에 아무도 없어야 함)
+        // --- [A] 직진 로직 (1칸 or 2칸) ---
         if (direction == forward) {
-            return targetPiece == null;
+            // 공통: 직진은 앞에 적이 없어야 함
+            if (targetPiece != null) return false;
+
+            // 1. 그냥 1칸 전진 -> OK
+            if (yDiff == 1) {
+                return true;
+            }
+
+            // 2. [NEW] 2칸 전진 -> "처음 위치"인지 확인!
+            if (yDiff == 2) {
+                if (isWhite() && source.getY() == 1) return true; // 백색 초기 위치
+                if (!isWhite() && source.getY() == 6) return true; // 흑색 초기 위치
+            }
+
+            // 그 외의 위치에서 2칸 가려고 하면 false
+            return false;
         }
 
-        // [상황 B] 대각선 공격 (적이 있어야 함)
-        if (isAttackMove) {
-            // 적이 있고 + 우리 편이 아니어야 함 (isSameColor 활용!)
+        // --- [B] 대각선 공격 로직 (변화 없음) ---
+        if (isAttackDirection(direction)) {
+            // 대각선은 무조건 1칸만 가능 (yDiff == 1)
+            if (yDiff != 1) return false;
+
             return targetPiece != null && !isSameColor(targetPiece);
         }
 

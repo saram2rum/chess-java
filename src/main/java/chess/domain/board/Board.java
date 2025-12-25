@@ -1,7 +1,10 @@
 package chess.domain.board;
 
 import chess.domain.piece.*;
+
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class Board {
@@ -67,32 +70,6 @@ public class Board {
         return piece;
     }
 
-    private void validatePathIsEmpty(Position source, Position target) {
-        // 1. 방향 구하기 (a1 -> a5면 NORTH)
-        Direction direction = Direction.of(source, target);
-
-        int currentX = source.getX();
-        int currentY = source.getY();
-
-        // 2. 목적지에 닿을 때까지 반복 (출발지 바로 다음 칸부터 검사)
-        while (true) {
-            currentX += direction.getXDegree();
-            currentY += direction.getYDegree();
-
-            Position current = new Position(currentX, currentY);
-
-            // 도착지에 왔으면 멈춤 (도착지에 적이 있는 건 잡으면 되니까 OK)
-            if (current.equals(target)) {
-                break;
-            }
-
-            // 3. 가는 길목에 누가 있다? -> 에러!! 쾅!!
-            if (pieces.containsKey(current)) {
-                throw new IllegalArgumentException("이동 경로가 막혀있습니다! 🚧");
-            }
-        }
-    }
-
     // ... 기존 코드 아래에 추가 ...
 
     public void move(Position source, Position target, Color currentTurn) {
@@ -112,8 +89,13 @@ public class Board {
             throw new IllegalArgumentException("같은 팀 기물이 있는 곳으로는 이동할 수 없습니다! 🚫");
         }
 
-        if (sourcePiece.isSliding()) {
-            validatePathIsEmpty(source, target);
+        if (sourcePiece.isSliding() && isPathBlocked(source, target)) {
+            throw new IllegalArgumentException("경로가 막혀있습니다!");
+        }
+
+        // 3. 🚨 [추가] "거기로 가면 우리 왕이 위험해지나요?" (자살 금지)
+        if (!isMoveSafe(source, target)) {
+            throw new IllegalArgumentException("왕이 체크 상태에 빠지게 되는 수는 둘 수 없습니다! 🛡️");
         }
 
         pieces.put(target, sourcePiece);
@@ -181,6 +163,132 @@ public class Board {
                 return true;
             }
         }
+    }
+
+    // "기물 규칙상 갈 수 있고 && 장애물도 없는지" 확인하는 통합 메서드
+// (public으로 열어서 ChessGame에서도 쓰면 좋습니다)
+    public boolean isValidMove(Position source, Position target) {
+        Piece piece = pieces.get(source);
+        if (piece == null) return false; // 기물이 없으면 이동 불가
+        if (source.equals(target)) return false;
+
+        Piece targetPiece = pieces.get(target);
+
+        // 1. 아군 팀킬 방지
+        if (targetPiece != null && piece.isSameColor(targetPiece)) {
+            return false;
+        }
+
+        // 2. 기물 자체의 이동 규칙 검사 (방향, 거리 등)
+        if (!piece.isMovable(source, target, targetPiece)) {
+            return false;
+        }
+
+        // 3. 장애물 검사 (슬라이딩 기물 OR "폰이 2칸 이동할 때") 🚨 수정됨!
+        // (폰인지 확인하기 위해 instanceof 사용)
+        boolean isPawnTwoStep = (piece instanceof Pawn) && Math.abs(source.getY() - target.getY()) == 2;
+
+        if ((piece.isSliding() || isPawnTwoStep) && isPathBlocked(source, target)) {
+            return false; // 중간에 누구 있으면 이동 불가
+        }
+
+        return true;
+    }
+
+    // "거기로 움직이면 우리 왕이 안전한가?" (가상 이동 시뮬레이션)
+    // source -> target으로 이동했을 때, 내 왕이 체크 상태가 아니면 true
+    private boolean isMoveSafe(Position source, Position target) {
+        Piece piece = pieces.get(source);
+        Piece capturedPiece = pieces.get(target);
+        Color myColor = piece.getColor();
+
+        // 1. 기물 이동 (가상)
+        pieces.put(target, piece);
+        pieces.remove(source);
+
+        // 왕 위치 업데이트 (필요시)
+        Position originalKingPos = null;
+        if (piece.isKing()) {
+            if (myColor.isWhite()) {
+                originalKingPos = whiteKingPosition;
+                whiteKingPosition = target;
+            } else {
+                originalKingPos = blackKingPosition;
+                blackKingPosition = target;
+            }
+        }
+
+        // 2. 안전한지 확인
+        boolean isSafe = !isChecked(myColor); // 내가 자살수를 둔 게 아닌지 확인
+
+        // 3. 원상복구 (Rollback)
+        pieces.put(source, piece);
+        if (capturedPiece != null) {
+            pieces.put(target, capturedPiece);
+        } else {
+            pieces.remove(target);
+        }
+
+        if (originalKingPos != null) {
+            if (myColor.isWhite()) whiteKingPosition = originalKingPos;
+            else blackKingPosition = originalKingPos;
+        }
+
+        return isSafe;
+    }
+
+    // 프론트엔드용: "이 기물, 어디 어디 갈 수 있어?"
+    public List<Position> calculateMovablePositions(Position source) {
+        List<Position> movablePositions = new ArrayList<>();
+        Piece piece = pieces.get(source);
+
+        if (piece == null) return movablePositions; // 빈칸 클릭하면 빈 리스트
+
+        // 체스판 전체를 훑으면서 갈 수 있는지 확인
+        for (int x = 0; x < 8; x++) {
+            for (int y = 0; y < 8; y++) {
+                Position target = new Position(x, y);
+                if (source.equals(target)) continue;
+
+                // 1. 규칙상 갈 수 있고 (isValidMove)
+                // 2. 가서 체크당하지 않는다면 (isMoveSafe) -> OK!
+                if (isValidMove(source, target) && isMoveSafe(source, target)) {
+                    movablePositions.add(target);
+                }
+            }
+        }
+
+        return movablePositions;
+    }
+
+    // "우리 팀 기물 중에 어디로든 움직여서 살 수 있는 수가 하나라도 있니?"
+    public boolean hasAnySafeMove(Color color) {
+
+        // 🚨 [수정 포인트] 에러 방지를 위해 keySet을 새로운 List로 복사해서 사용!
+        List<Position> piecePositions = new ArrayList<>(pieces.keySet());
+
+        for (Position source : piecePositions) {
+            // 주의: 복사본에는 있는데, 그 사이에 잡혀서 사라진 기물일 수도 있으니 null 체크 필수
+            Piece piece = pieces.get(source);
+            if (piece == null || piece.getColor() != color) continue;
+
+            // 방금 만든 메서드 활용!
+            // "이 기물이 갈 수 있는 곳이 하나라도 있으면 생존"
+            if (!calculateMovablePositions(source).isEmpty()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    // 1. 체크메이트: 체크 상태인데 && 살길이 없음
+    public boolean isCheckMate(Color color) {
+        return isChecked(color) && !hasAnySafeMove(color);
+    }
+
+    // 2. 스테일메이트: 체크 아닌데 && 살길이 없음 (무승부)
+    public boolean isStaleMate(Color color) {
+        return !isChecked(color) && !hasAnySafeMove(color);
     }
 
 
