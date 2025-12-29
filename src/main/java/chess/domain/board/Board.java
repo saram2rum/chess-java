@@ -72,7 +72,7 @@ public class Board {
 
     // ... 기존 코드 아래에 추가 ...
 
-    public void move(Position source, Position target, Color currentTurn) {
+    public void move(Position source, Position target, Color currentTurn, Type promotionType) {
 
         Piece sourcePiece = findPiece(source);
         Piece targetPiece = pieces.get(target);
@@ -108,6 +108,26 @@ public class Board {
         if (sourcePiece.is(Type.KING, Color.BLACK)) {
             blackKingPosition = target;
         }
+
+        // 👑 [프로모션 로직 추가]
+        // "지금 도착한 기물이 폰이고 + 끝까지 갔다면?"
+        if (sourcePiece.is(Type.PAWN)) {
+            if (canPromote(target, sourcePiece.getColor())) {
+                // 변신할 타입이 없으면? -> 룰상 에러지만, 일단 퀸으로 자동 변신 or 에러 처리
+                if (promotionType == null) {
+                    // 제대로 하려면 여기서 에러를 내야 맞습니다.
+                    // throw new IllegalArgumentException("프로모션할 기물을 선택해야 합니다!");
+
+                    // 하지만 편의상 일단 퀸으로 해둡시다.
+                    promotionType = Type.QUEEN;
+                }
+
+                // 기물 교체 (변신!)
+                Piece promotedPiece = createPromotedPiece(promotionType, sourcePiece.getColor());
+                pieces.put(target, promotedPiece);
+            }
+        }
+
     }
 
     public boolean isChecked(Color kingColor) {
@@ -291,5 +311,22 @@ public class Board {
         return !isChecked(color) && !hasAnySafeMove(color);
     }
 
+    // 프로모션 자격 확인 (맨 끝 줄인가?)
+    private boolean canPromote(Position target, Color color) {
+        int y = target.getY();
+        // 백색은 y=7(8랭크), 흑색은 y=0(1랭크) 도달 시
+        if (color.isWhite()) return y == 7;
+        else return y == 0;
+    }
 
+    // 기물 생성 공장 (Factory 패턴의 간단 버전)
+    private Piece createPromotedPiece(Type type, Color color) {
+        switch (type) {
+            case QUEEN: return new Queen(color);
+            case ROOK: return new Rook(color);
+            case BISHOP: return new Bishop(color);
+            case KNIGHT: return new Knight(color);
+            default: throw new IllegalArgumentException("폰은 킹이나 폰으로 변신할 수 없습니다.");
+        }
+    }
 }

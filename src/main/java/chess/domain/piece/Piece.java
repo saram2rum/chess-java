@@ -15,7 +15,7 @@ public abstract class Piece {
     private boolean hasMoved = false;
 
     // 기물이 이동할 때마다 호출해 줄 메서드
-    public void updateHasMoved() {
+    public void ㅡoved() {
         this.hasMoved = true;
     }
 

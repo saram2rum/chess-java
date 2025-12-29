@@ -3,6 +3,7 @@ package chess.domain.game;
 import chess.domain.board.Board;
 import chess.domain.board.Position;
 import chess.domain.piece.Color;
+import chess.domain.piece.Type;
 
 public class ChessGame {
     private final Board board;
@@ -27,7 +28,7 @@ public class ChessGame {
         this.currentTurn = Color.WHITE; // 체스는 항상 흰색 먼저 시작
     }
 
-    public void move(String sourceStr, String targetStr) {
+    public void move(String sourceStr, String targetStr, Type promotionType) {
         if (!isRunning) {
             System.out.println("게임이 이미 종료되었습니다. 🚫");
             return;
@@ -39,10 +40,10 @@ public class ChessGame {
             Position target = new Position(targetStr);
 
             // 3. Board에게 진짜 좌표로 이동 명령
-            board.move(source, target, currentTurn);
+            board.move(source, target, currentTurn, promotionType);
 
             // --- 성공했을 때만 아래 로직 실행 ---
-            System.out.println("이동 성공: " + sourceStr + " -> " + targetStr);
+            System.out.print("이동 성공: " + sourceStr + " -> " + targetStr);
 
             // 4. 승패/체크 판정 (아까 만든 로직)
             checkGameStatus();

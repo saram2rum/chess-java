@@ -2,47 +2,76 @@ package chess;
 
 import chess.domain.game.ChessGame;
 import chess.domain.board.Position;
+import chess.domain.piece.Type;
 
 public class Application {
 
     public static void main(String[] args) {
 
         ChessGame game = new ChessGame();
-        System.out.println("=== ♟️ 폰 2칸 이동 규칙 테스트 (정밀) ♟️ ===");
+        System.out.println("=== 👑 프로모션(승급) 테스트 👑 ===");
 
-        // 1. [White] 초기 위치 2칸 전진 (성공해야 함)
-        move(game, "a2", "a4");
+        // [전략]
+        // 1. 백(b2)이 b4로 나감
+        // 2. 흑(a7)이 a5로 나옴
+        // 3. 백(b4)이 a5를 잡으면서(Capture) a열로 차선 변경!
+        //    -> 이러면 a6, a7, a8이 텅텅 빔! (고속도로 개통 🛣️)
 
-        // 2. [Black] 흑색도 아무거나 하나 둬서 턴을 넘겨줌 (h7 -> h6)
-        // (그래야 다시 백색 차례가 옴)
-        move(game, "h7", "h6");
+        move(game, "b2", "b4"); // 1. 백 전진
+        move(game, "a7", "a5"); // 2. 흑 전진 (먹잇감 등장)
 
-        // 3. [White] 한 번 움직였던 폰이 또 2칸 가려고 함 (a4 -> a6) -> 여기서 실패해야 함!
-        // 기대 메시지: "그 기물은 거기로 갈 수 없습니다!"
-        move(game, "a4", "a6");
+        // 3. 흑 폰을 잡으면서 a5로 이동!
+        move(game, "b4", "a5");
 
-        // 4. [White] (실패했으니 여전히 백 턴) 이번엔 1칸만 가봄 (a4 -> a5) -> 성공해야 함
-        move(game, "a4", "a5");
+        move(game, "h7", "h6"); // 흑은 구석에서 턴 낭비 중...
 
-        // 5. [Black] b7 -> b5 (흑 폰 2칸 테스트)
-        move(game, "b7", "b5");
-        System.out.println("--- 흑 폰 테스트 완료 ---");
+        move(game, "a5", "a6"); // 4. 백 전진 (앞이 뻥 뚫림)
+        move(game, "h6", "h5");
+
+        move(game, "a6", "a7"); // 5. 백 도착 직전! (a7)
+        move(game, "h5", "h4");
+
+        System.out.println(">>> 운명의 순간! 폰이 끝(b8)에 도착합니다! (나이트로 변신 시도)");
+
+        // 👑 a7 -> a8 로 가면서 KNIGHT로 승급!
+        movePromote(game, "a7", "b8", Type.KNIGHT);
 
     }
 
     // 🛠️ 도우미 메서드: 이제 Board가 아니라 Game을 받습니다!
+    // 1. 일반 이동 (기존 코드 호환용)
     public static void move(ChessGame game, String source, String target) {
+        move(game, source, target, null); // 아래 녀석에게 null을 넘겨서 처리
+    }
+
+    // 2. 프로모션 이동 (진짜 일하는 녀석)
+    public static void move(ChessGame game, String source, String target, Type promotionType) {
         try {
-            System.out.print("이동 시도: " + source + " -> " + target + " ... ");
+            // 로그 메시지도 프로모션이면 좀 다르게 출력
+            String message = "이동 시도: " + source + " -> " + target;
+            if (promotionType != null) {
+                message += " (승급: " + promotionType + ")";
+            }
+            System.out.print(message + " ... ");
 
-            // game.move 안에서 1.턴 검사 -> 2.기물 검사 -> 3.이동 -> 4.턴 넘기기 다 함
-            game.move(source, target);
+            // game.move에게 type까지 전달!
+            game.move(source, target, promotionType);
 
-            System.out.println("✅ 성공!");
-            // (선택) 눈으로 보고 싶다면: OutputView.printBoard(game.getBoard());
+            System.out.println(" ✅ 성공!");
         } catch (Exception e) {
             System.out.println("❌ 실패: " + e.getMessage());
-            e.printStackTrace();
+            // e.printStackTrace(); // 에러 위치 찾을 때 주석 해제
+        }
+    }
+
+    // Application 내의 도우미 메서드 추가
+    public static void movePromote(ChessGame game, String source, String target, Type type) {
+        try {
+            System.out.print("승급 이동 시도: " + source + " -> " + target + " (" + type + ") ... ");
+            game.move(source, target, type); // 3개짜리 호출
+            // 성공 메시지는 ChessGame에서 출력
+        } catch (Exception e) {
+            System.out.println("❌ 실패: " + e.getMessage());
         }
     }
 }
